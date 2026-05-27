@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Agendador de Disparo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;600;800&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0c10;
+      --panel: #0f1318;
+      --border: #1e2a38;
+      --accent: #00e5ff;
+      --accent2: #ff3c6e;
+      --text: #c8d8e8;
+      --dim: #4a6070;
+      --mono: 'Share Tech Mono', monospace;
+      --sans: 'Barlow', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    .card {
+      position: relative;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-top: 2px solid var(--accent);
+      padding: 2.5rem 2.8rem 2.2rem;
+      width: 440px;
+      max-width: 95vw;
+      box-shadow: 0 0 60px rgba(0,229,255,0.06), 0 20px 40px rgba(0,0,0,0.5);
+    }
+
+    .card::after {
+      content: '';
+      position: absolute;
+      top: 0; right: 0;
+      width: 80px; height: 80px;
+      background: radial-gradient(circle at top right, rgba(0,229,255,0.12), transparent 70%);
+      pointer-events: none;
+    }
+
+    .label-top {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 0.3rem;
+    }
+
+    h1 {
+      font-family: var(--sans);
+      font-weight: 800;
+      font-size: 1.7rem;
+      letter-spacing: -0.01em;
+      color: #fff;
+      line-height: 1.1;
+      margin-bottom: 0.3rem;
+    }
+
+    .subtitle {
+      font-size: 0.8rem;
+      color: var(--dim);
+      font-weight: 300;
+      margin-bottom: 2rem;
+      font-family: var(--mono);
+    }
+
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, var(--accent), transparent);
+      margin-bottom: 2rem;
+      opacity: 0.3;
+    }
+
+    .fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    label {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.12em;
+      color: var(--dim);
+      text-transform: uppercase;
+    }
+
+    input[type="number"] {
+      background: #080b0f;
+      border: 1px solid var(--border);
+      border-bottom: 2px solid var(--accent);
+      color: var(--accent);
+      font-family: var(--mono);
+      font-size: 1.5rem;
+      text-align: center;
+      padding: 0.6rem 0.3rem;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      -moz-appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    input[type="number"]:focus {
+      border-bottom-color: var(--accent2);
+      box-shadow: 0 4px 12px rgba(255,60,110,0.15);
+      color: #fff;
+    }
+
+    .sep {
+      display: flex;
+      align-items: flex-end;
+      padding-bottom: 0.9rem;
+      color: var(--dim);
+      font-family: var(--mono);
+      font-size: 1.1rem;
+      justify-content: center;
+    }
+
+    .btn {
+      width: 100%;
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 0.95rem;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: color 0.25s, background 0.25s;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--accent);
+      transform: translateX(-100%);
+      transition: transform 0.25s ease;
+      z-index: 0;
+    }
+
+    .btn:hover::before { transform: translateX(0); }
+    .btn:hover { color: #000; }
+    .btn span { position: relative; z-index: 1; }
+
+    .status {
+      margin-top: 1.2rem;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      color: var(--dim);
+      text-align: center;
+      min-height: 1.2em;
+      transition: color 0.3s;
+    }
+
+    .status.active { color: var(--accent); animation: blink 1.2s step-start infinite; }
+    .status.error  { color: var(--accent2); }
+
+    @keyframes blink { 50% { opacity: 0.3; } }
+
+    #countdown {
+      font-family: var(--mono);
+      font-size: 2rem;
+      color: var(--accent);
+      text-align: center;
+      margin-top: 1.5rem;
+      letter-spacing: 0.06em;
+      min-height: 2.6rem;
+      display: none;
+    }
+
+    .target-url {
+      margin-top: 1.5rem;
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      color: var(--dim);
+      text-align: center;
+      word-break: break-all;
+    }
+
+    .target-url span { color: var(--accent); opacity: 0.6; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="label-top">// sistema de agendamento</div>
+    <h1>Disparo<br>Programado</h1>
+    <p class="subtitle">prenotami.esteri.it &rarr; booking/5402</p>
+    <div class="divider"></div>
+
+    <div class="fields">
+      <div class="field">
+        <label>Hora</label>
+        <input type="number" id="hora" min="0" max="23" value="09" placeholder="HH"/>
+      </div>
+      <div class="sep">:</div>
+      <div class="field">
+        <label>Minuto</label>
+        <input type="number" id="minuto" min="0" max="59" value="00" placeholder="MM"/>
+      </div>
+      <div class="sep">:</div>
+      <div class="field">
+        <label>Segundo</label>
+        <input type="number" id="segundo" min="0" max="59" value="00" placeholder="SS"/>
+      </div>
+      <div class="sep">.</div>
+      <div class="field">
+        <label>ms</label>
+        <input type="number" id="milisegundo" min="0" max="999" value="000" placeholder="ms"/>
+      </div>
+    </div>
+
+    <button class="btn" onclick="agendarDisparo()"><span>⚡ Agendar Disparo</span></button>
+
+    <div id="status" class="status">aguardando configuração...</div>
+    <div id="countdown"></div>
+
+    <div class="target-url">destino → <span>https://prenotami.esteri.it/Services/Booking/5402</span></div>
+  </div>
+
+  <script>
+    let countdownTimer = null;
+
+    function agendarDisparo() {
+      const hora        = parseInt(document.getElementById('hora').value);
+      const minuto      = parseInt(document.getElementById('minuto').value);
+      const segundo     = parseInt(document.getElementById('segundo').value);
+      const milisegundo = parseInt(document.getElementById('milisegundo').value);
+
+      const agora = new Date();
+      const alvo  = new Date();
+      alvo.setHours(hora);
+      alvo.setMinutes(minuto);
+      alvo.setSeconds(segundo);
+      alvo.setMilliseconds(milisegundo);
+
+      let delay = alvo - agora;
+
+      const statusEl    = document.getElementById('status');
+      const countdownEl = document.getElementById('countdown');
+
+      if (delay < 0) {
+        statusEl.textContent = '✗ horário já passou hoje.';
+        statusEl.className   = 'status error';
+        countdownEl.style.display = 'none';
+        return;
+      }
+
+      if (countdownTimer) clearInterval(countdownTimer);
+
+      statusEl.textContent = '● disparo agendado — aguardando...';
+      statusEl.className   = 'status active';
+      countdownEl.style.display = 'block';
+
+      function updateCountdown() {
+        const diff = alvo - new Date();
+        if (diff <= 0) {
+          clearInterval(countdownTimer);
+          countdownEl.textContent = '00:00:00.000';
+          return;
+        }
+        const h   = String(Math.floor(diff / 3600000)).padStart(2, '0');
+        const m   = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
+        const s   = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
+        const ms  = String(diff % 1000).padStart(3, '0');
+        countdownEl.textContent = `${h}:${m}:${s}.${ms}`;
+      }
+
+      updateCountdown();
+      countdownTimer = setInterval(updateCountdown, 50);
+
+      setTimeout(() => {
+        clearInterval(countdownTimer);
+        window.location.href = "https://prenotami.esteri.it/Services/Booking/5402";
+      }, delay);
+    }
+  </script>
+</body>
+</html>
